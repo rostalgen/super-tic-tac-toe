@@ -130,12 +130,29 @@ function endGame() {
 
 function highlightActiveBoard(gameState) {
     document.querySelectorAll('.board').forEach(board => board.classList.remove('active-board', 'opponent-turn'));
-    if (gameState && gameState.activeBoard) {
-        const activeBoard = document.getElementById(`board-${gameState.activeBoard[0]}-${gameState.activeBoard[1]}`);
-        if (gameState.currentPlayerIndex === playerIndex) {
-            activeBoard.classList.add('active-board');
-        } else {
-            activeBoard.classList.add('opponent-turn');
+    if (gameState) {
+        if(gameState.activeBoard) {
+            const activeBoard = document.getElementById(`board-${gameState.activeBoard[0]}-${gameState.activeBoard[1]}`);
+            if (gameState.currentPlayerIndex === playerIndex) {
+                activeBoard.classList.add('active-board');
+            } else {
+                activeBoard.classList.add('opponent-turn');
+            }
+        }
+        else {
+            for (let i = 0; i < 3; i++) {
+                for (let j = 0; j < 3; j++) {
+                    const board = document.getElementById(`board-${i}-${j}`);
+                    const cells = board.getElementsByClassName('cell');
+                    if (gameState.boardWinners[i][j] === '') {
+                        if (gameState.currentPlayerIndex === playerIndex) {
+                            board.classList.add('active-board')
+                        } else {
+                            board.classList.add('opponent-turn')
+                        }
+                    }
+                }
+            }
         }
     }
 }
