@@ -71,7 +71,6 @@ io.on('connection', (socket) => {
                 if (isValidMove(room.gameState, boardRow, boardCol, cellRow, cellCol)) {
                     updateGameState(room.gameState, boardRow, boardCol, cellRow, cellCol);
                     io.to(roomId).emit('gameStateUpdate', room.gameState);
-                    checkGameEnd(roomId, room);
                 }
             }
         }
