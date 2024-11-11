@@ -58,6 +58,25 @@
         #roomControls {
             margin-bottom: 20px;
         }
+        #chatArea {
+            border: 2px solid #ccc;
+            padding: 10px;
+            margin-top: 20px;
+            width: 300px;
+            text-align: left;
+        }
+        #chatMessages {
+            height: 200px;
+            overflow-y: auto;
+            margin-bottom: 10px;
+        }
+        #chatInput {
+            width: 65%;
+            margin-right: 3%;
+        }
+        #sendMessage {
+            width: 25%;
+        }
     </style>
 </head>
 <body>
@@ -89,6 +108,11 @@
         <div>
             <div id="superGame" class="super-board"></div>
         </div>
+        <div id="chatArea">
+            <div id="chatMessages"></div>
+            <input type="text" id="chatInput" placeholder="Type a message...">
+            <button id="sendMessage">Send</button>
+        </div>        
     </div>
     <script src="/socket.io/socket.io.js"></script>
     <script src="sharedLogic.js"></script>
