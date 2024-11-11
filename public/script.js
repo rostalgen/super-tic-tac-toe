@@ -3,9 +3,9 @@ let currentPlayer = 'X';
 let superBoard = Array(BOARD_SIZE).fill().map(() => Array(BOARD_SIZE).fill().map(() => Array(BOARD_SIZE).fill().map(() => Array(BOARD_SIZE).fill(''))));
 let boardWinners = Array(BOARD_SIZE).fill().map(() => Array(BOARD_SIZE).fill(''));
 let activeBoard = null;
-let gameActive = true;
 const socket = io();
 let currentRoom = null;
+let localGameState = null;
 
 function createBoard() {
     const game = document.getElementById('superGame');
@@ -28,8 +28,14 @@ function createBoard() {
 }
 
 function makeMove(boardRow, boardCol, cellRow, cellCol) {
-    console.log("Making move:", boardRow, boardCol, cellRow, cellCol);
-    if (currentRoom && gameActive) {
+    console.log("Making move:", boardRow, boardCol, cellRow, cellCol);    
+    if (currentRoom === 'local') {
+        if (sharedLogic.isValidMove(localGameState, boardRow, boardCol, cellRow, cellCol)) {
+            sharedLogic.updateGameState(localGameState, boardRow, boardCol, cellRow, cellCol);
+            updateBoard(localGameState);
+            updateStatus(localGameState);
+        }
+    } else if (currentRoom) {
         socket.emit('makeMove', { roomId: currentRoom, boardRow, boardCol, cellRow, cellCol });
     }
 }
@@ -63,24 +69,6 @@ function updateSuperBoard() {
     }
 }
 
-function checkWin(board) {
-    for (let i = 0; i < BOARD_SIZE; i++) {
-        if (board[i][0] !== '' && board[i][0] === board[i][1] && board[i][1] === board[i][2]) return true;
-        if (board[0][i] !== '' && board[0][i] === board[1][i] && board[1][i] === board[2][i]) return true;
-    }
-    if (board[0][0] !== '' && board[0][0] === board[1][1] && board[1][1] === board[2][2]) return true;
-    if (board[0][2] !== '' && board[0][2] === board[1][1] && board[1][1] === board[2][0]) return true;
-    return false;
-}
-
-function checkSuperWin() {
-    return checkWin(boardWinners);
-}
-
-function checkDraw(board) {
-    return board.every(row => row.every(cell => cell !== ''));
-}
-
 function updateBoard(gameState) {
     for (let i = 0; i < 3; i++) {
         for (let j = 0; j < 3; j++) {
@@ -109,22 +97,32 @@ function updateStatus(gameState) {
     const status = document.getElementById('playerStatus');
     if(gameState && gameState.currentPlayerIndex !== null)
     {
-        const currentPlayer = gameState.currentPlayerIndex === playerIndex ? 'Your' : "Opponent's";
-        status.textContent = `${currentPlayer} turn`;
+        if(currentRoom === 'local'){
+            const currentPlayer = gameState.currentPlayerIndex === 0 ? 'X' : 'O';
+            status.textContent = `${currentPlayer}'s turn`;
+        }
+        else {
+            const currentPlayer = gameState.currentPlayerIndex === playerIndex ? 'Your' : "Opponent's";
+            status.textContent = `${currentPlayer} turn`;
+        }
         if (gameState.activeBoard) {
             status.textContent += ` (Must play in board ${gameState.activeBoard[0] * 3 + gameState.activeBoard[1] + 1})`;
         } else {
             status.textContent += ' (Can play in any board)';
         }
         if (gameState.winner) {
-            status.textContent = gameState.winner === (playerIndex === 0 ? 'X' : 'O') ? 'You win!' : 'You lose!';
+            if(currentRoom === 'local'){
+                status.textContent = `${gameState.winner} wins`;
+            }
+            else {
+                status.textContent = gameState.winner === (playerIndex === 0 ? 'X' : 'O') ? 'You win!' : 'You lose!';
+            }
             endGame();
         }
     }
 }
 
 function endGame() {
-    gameActive = false;
     highlightActiveBoard();
 }
 
@@ -162,7 +160,6 @@ function resetGame() {
     boardWinners = Array(BOARD_SIZE).fill().map(() => Array(BOARD_SIZE).fill(''));
     currentPlayer = 'X';
     activeBoard = null;
-    gameActive = true;
 
     document.getElementById('superGame').innerHTML = '';
     createBoard();
@@ -223,7 +220,18 @@ socket.on('roomError', (errorMessage) => {
     document.getElementById('playerStatus').textContent = `Error: ${errorMessage}`;
 });
 
-// Event listeners for room controls
+function startLocalPlay() {
+    currentRoom = 'local';
+    playerIndex = 0;
+    localGameState = sharedLogic.initializeGameState();
+    updateBoard(localGameState);
+    updateRoomControls();
+    updateRoomInfo(currentRoom, true);
+    updateStatus(localGameState);
+}
+
+
+document.getElementById('localPlayBtn').addEventListener('click', startLocalPlay);
 document.getElementById('createRoomBtn').addEventListener('click', createRoom);
 document.getElementById('joinRoomBtn').addEventListener('click', joinRoom);
 document.getElementById('leaveRoomBtn').addEventListener('click', leaveRoom);
