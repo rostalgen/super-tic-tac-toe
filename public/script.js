@@ -230,6 +230,26 @@ function startLocalPlay() {
     updateStatus(localGameState);
 }
 
+function sendChatMessage() {
+    const message = document.getElementById('chatInput').value;
+    if (message && currentRoom) {
+        socket.emit('chatMessage', { roomId: currentRoom, message });
+        document.getElementById('chatInput').value = '';
+    }
+}
+
+socket.on('chatMessage', ({ sender, message }) => {
+    const chatMessages = document.getElementById('chatMessages');
+    const messageElement = document.createElement('div');
+    messageElement.textContent = `${sender === socket.id ? 'You' : 'Opponent'}: ${message}`;
+    chatMessages.appendChild(messageElement);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+});
+
+document.getElementById('sendMessage').addEventListener('click', sendChatMessage);
+document.getElementById('chatInput').addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') sendChatMessage();
+});
 
 document.getElementById('localPlayBtn').addEventListener('click', startLocalPlay);
 document.getElementById('createRoomBtn').addEventListener('click', createRoom);
