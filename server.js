@@ -64,6 +64,13 @@ io.on('connection', (socket) => {
         console.log('User disconnected');
         // Handle player disconnection (remove from rooms, notify other player, etc.)
     });
+
+    socket.on('chatMessage', ({ roomId, message }) => {
+        if (rooms.has(roomId)) {
+            io.to(roomId).emit('chatMessage', { sender: socket.id, message });
+        }
+    });
+    
 });
 
 server.listen(PORT, () => {
